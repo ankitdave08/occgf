@@ -15,6 +15,7 @@ public class CustomerController {
     @RequestMapping(value = "", method = RequestMethod.POST)
     @ResponseBody
     public String createUser(@RequestBody CustomerDetail customerDetail) {
+        System.out.println("Customer: " + customerDetail);
         return customerDetail.toString();
     }
 
