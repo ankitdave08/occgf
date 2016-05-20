@@ -2,6 +2,8 @@ package com.listertechnologies.occgf.core;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.http.HttpEntity;
@@ -12,24 +14,78 @@ import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.listertechnologies.occgf.api.GfCustomerDetail;
+import com.listertechnologies.occgf.api.OccCustomerDetail;
+import com.listertechnologies.occgf.api.OccProfile;
+
 public class CustomerService {
-    public void sendCustomerData() throws ClientProtocolException, IOException {
+    public void sendCustomerData(GfCustomerDetail gcd) {
         CloseableHttpClient httpclient = HttpClientBuilder.create().build();
 
-        String encoding = new String(Base64.encodeBase64("156224a2:c59d1ee342e735a1c8c29108f49962bd".getBytes()));
-        HttpPost httppost = new HttpPost("https://qa-api.listeremerge.net/api/v1/customer");
-        httppost.setHeader("Authorization", "Basic " + encoding);
+        String user = System.getProperty("GF_API_USER");
+        String pass = System.getProperty("GF_API_PASS");
+        String url = System.getProperty("GF_API_URL");
+
+        String auth = new String(Base64.encodeBase64((user + ":" + pass).getBytes()));
+
+        HttpPost httppost = new HttpPost(url);
+        httppost.setHeader("Authorization", "Basic " + auth);
         httppost.setHeader("Content-Type", "application/json");
-        httppost.setEntity(new StringEntity("[{\"customerId\": \"1\",\"firstName\": \"Test1\",\"email1\":\"test1@example.com\"}]"));
+
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            String json = mapper.writeValueAsString(Arrays.asList(gcd));
+            System.out.println("JSON to be sent to GF: " + json);
+
+            httppost.setEntity(new StringEntity(json));
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
 
         System.out.println("executing request " + httppost.getRequestLine());
-        HttpResponse response = httpclient.execute(httppost);
-        HttpEntity entity = response.getEntity();
-        InputStream istr = entity.getContent();
-        int c = istr.read();
-        while (c != -1) {
-            System.out.print((char)c);
-            c = istr.read();
+
+        HttpResponse response = null;
+
+        try {
+            response = httpclient.execute(httppost);
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
         }
+
+        HttpEntity entity = response.getEntity();
+
+        int c;
+        try {
+            InputStream istr = entity.getContent();
+            c = istr.read();
+            while (c != -1) {
+                System.out.print((char) c);
+                c = istr.read();
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void transformAndSend(OccCustomerDetail ocd) {
+        GfCustomerDetail gcd = new GfCustomerDetail();
+
+        if (ocd != null) {
+            OccProfile ocdp = ocd.getProfile();
+            if (ocdp != null) {
+                gcd.setCustomerId(ocd.getProfileId());
+                gcd.setFirstName(ocdp.getFirstName());
+                gcd.setLastName(ocdp.getLastName());
+                gcd.setEmail1(ocdp.getEmail());
+            }
+        }
+
+        sendCustomerData(gcd);
     }
 }
