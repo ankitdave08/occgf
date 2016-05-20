@@ -13,6 +13,8 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -20,7 +22,9 @@ import com.listertechnologies.occgf.api.GfCustomerDetail;
 import com.listertechnologies.occgf.api.OccCustomerDetail;
 import com.listertechnologies.occgf.api.OccProfile;
 
+@Component
 public class CustomerService {
+
     public void sendCustomerData(GfCustomerDetail gcd) {
         CloseableHttpClient httpclient = HttpClientBuilder.create().build();
 
@@ -88,4 +92,10 @@ public class CustomerService {
 
         sendCustomerData(gcd);
     }
+    
+    /*@Scheduled(fixedDelay=5000)
+    public void run() {
+        System.out.println("I ran");
+    }*/
+
 }
