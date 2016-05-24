@@ -93,9 +93,9 @@ public class CustomerService {
         sendCustomerData(gcd);
     }
     
-    /*@Scheduled(fixedDelay=5000)
+    @Scheduled(fixedDelay=5000)
     public void run() {
-        System.out.println("I ran");
-    }*/
+        // System.out.println("I ran");
+    }
 
 }
