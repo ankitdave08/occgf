@@ -6,13 +6,16 @@ import java.io.UnsupportedEncodingException;
 import java.util.Arrays;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -25,7 +28,11 @@ import com.listertechnologies.occgf.api.OccProfile;
 @Component
 public class CustomerService {
 
+    @Autowired
+    AuthService authService;
+
     public void sendCustomerData(GfCustomerDetail gcd) {
+
         CloseableHttpClient httpclient = HttpClientBuilder.create().build();
 
         String user = System.getenv("GF_API_USER");
@@ -92,10 +99,46 @@ public class CustomerService {
 
         sendCustomerData(gcd);
     }
-    
-    @Scheduled(fixedDelay=5000)
+
+    @Scheduled(fixedDelay = 5000)
     public void run() {
         // System.out.println("I ran");
+    }
+
+    public void importFromOcc() {
+
+        String token = authService.authenticate();
+
+        CloseableHttpClient httpclient = HttpClientBuilder.create().build();
+
+        String url = System.getenv("OCC_API_USER_URL");
+
+        HttpGet httpget = new HttpGet(url);
+        httpget.setHeader("Authorization", "Bearer " + token);
+
+        System.out.println("executing request " + httpget.getRequestLine());
+
+        HttpResponse response = null;
+
+        try {
+            response = httpclient.execute(httpget);
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        HttpEntity entity = response.getEntity();
+
+        String responseStr = "";
+        try {
+            InputStream istr = entity.getContent();
+            responseStr = IOUtils.toString(istr, "UTF-8");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        System.out.println("Profiles response: " + responseStr);
+
     }
 
 }

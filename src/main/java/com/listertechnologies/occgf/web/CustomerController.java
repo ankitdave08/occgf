@@ -19,7 +19,7 @@ import com.listertechnologies.occgf.core.CustomerService;
 @Controller
 @RequestMapping("/customer")
 public class CustomerController {
-    
+
     @Autowired
     CustomerService customerService;
 
@@ -41,6 +41,13 @@ public class CustomerController {
             e.printStackTrace();
         }
         return "Success";
+    }
+
+    @RequestMapping("/import")
+    @ResponseBody
+    public String importUsers() {
+        customerService.importFromOcc();
+        return "SUCCESS";
     }
 
 }
