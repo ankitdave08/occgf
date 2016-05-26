@@ -30,7 +30,7 @@ public class CustomerService {
 
         String user = System.getenv("GF_API_USER");
         String pass = System.getenv("GF_API_PASS");
-        String url = System.getenv("GF_API_URL");
+        String url = System.getenv("GF_API_CUSTOMER_URL");
 
         String auth = new String(Base64.encodeBase64((user + ":" + pass).getBytes()));
 
