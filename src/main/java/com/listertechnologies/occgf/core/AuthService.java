@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
@@ -11,23 +12,29 @@ import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.listertechnologies.occgf.api.OccAuthResponse;
 
+@Component
 public class AuthService {
+
     public String authenticate() {
 
         CloseableHttpClient httpclient = HttpClientBuilder.create().build();
 
-        HttpPost httppost = new HttpPost("https://ccadmin-z42a.oracleoutsourcing.com/ccadmin/v1/login");
+        String url = System.getenv("OCC_API_AUTH_URL");
+        HttpPost httppost = new HttpPost(url);
         httppost.setHeader("Content-Type", "application/x-www-form-urlencoded");
 
         try {
-            httppost.setEntity(new StringEntity(
-                    "grant_type=password&username=senthilkumar.c@listertechnologies.com&password=Lister_123"));
+            String user = System.getenv("OCC_API_USER");
+            String pass = System.getenv("OCC_API_PASS");
+            String postStr = String.format("grant_type=password&username=%s&password=%s", user, pass);
+            httppost.setEntity(new StringEntity(postStr));
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
@@ -46,20 +53,13 @@ public class AuthService {
 
         HttpEntity entity = response.getEntity();
 
-        StringBuilder responseStrBuilder = new StringBuilder();
-        int c;
+        String responseStr = "";
         try {
             InputStream istr = entity.getContent();
-            c = istr.read();
-            while (c != -1) {
-                responseStrBuilder.append((char) c);
-                c = istr.read();
-            }
+            responseStr = IOUtils.toString(istr, "UTF-8");
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        String responseStr = responseStrBuilder.toString();
 
         ObjectMapper mapper = new ObjectMapper();
         OccAuthResponse authResponse = null;
@@ -72,9 +72,13 @@ public class AuthService {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        if (authResponse != null)
+
+        if (authResponse != null) {
             return authResponse.access_token;
-        else
+        } else {
             return "";
+        }
+
     }
+
 }
